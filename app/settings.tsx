@@ -1,41 +1,32 @@
-import {Topbar, Grid, RadioGroup, Radio, Button} from '@/components';
-import {useEffect, useState} from "react";
-import {useSession} from "@/app/ctx";
+import { Link, Stack } from 'expo-router';
+import { StyleSheet } from 'react-native';
+
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
 export default function SettingsScreen() {
-    const { changeTheme, theme, signOut } = useSession();
-    const [valueChecked, setValueChecked] = useState('1');
-
-    useEffect(() => {
-        changeTheme(valueChecked)
-    }, [valueChecked]);
-
-    useEffect(() => {
-        // @ts-ignore
-        setValueChecked(theme === null ? "auto" : theme);
-    }, []);
-
-    return  <Grid>
-                <Topbar
-                    title="Configurações"
-                    back={true}
-                    menu={false}/>
-                <Grid>
-                    <RadioGroup>
-                        <Radio
-                            valueChecked={valueChecked}
-                            setValueChecked={setValueChecked}
-                            radios={[
-                                {value: "auto", label: "Automático"},
-                                {value: "light", label: "Light"},
-                                {value: "dark", label: "Dark"},
-                            ]} />
-                    </RadioGroup>
-                </Grid>
-                <Grid>
-                    <Button mode="contained" onPress={signOut} buttonColor="red">
-                        SAIR
-                    </Button>
-                </Grid>
-            </Grid>
+    return (
+        <>
+            <Stack.Screen options={{ title: 'Oops!' }} />
+            <ThemedView style={styles.container}>
+                <ThemedText type="title">This screen doesn't exist.</ThemedText>
+                <Link href="/" style={styles.link}>
+                    <ThemedText type="link">Go to home screen!</ThemedText>
+                </Link>
+            </ThemedView>
+        </>
+    );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    link: {
+        marginTop: 15,
+        paddingVertical: 15,
+    },
+});
