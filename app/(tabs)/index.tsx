@@ -1,17 +1,14 @@
-import { Appbar } from "react-native-paper";
 import { router } from "expo-router";
+import {AppBar} from "@/components";
 
 export default function HomeScreen() {
     return (
-        <Appbar.Header>
-          <Appbar.Content title="Home"/>
-          <Appbar.Action
+        <AppBar
+            title="Início"
             icon="dots-vertical"
             onPress={() => {
-              router.push("settings");
-            }}
-          />
-        </Appbar.Header>
+                router.push("settings");
+            }}/>
     );
 }
 

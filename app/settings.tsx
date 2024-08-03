@@ -1,4 +1,4 @@
-import { Button, Text } from 'react-native-paper';
+import { Button } from '@/components';
 import { router } from 'expo-router';
 
 export default function SettingsScreen() {
