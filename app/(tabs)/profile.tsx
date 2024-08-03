@@ -1,27 +1,16 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
+import { Appbar } from "react-native-paper";
+import { router } from "expo-router";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function TabProfileScreen() {
+export default function ProfileScreen() {
     return (
-        <ThemedView style={styles.titleContainer}><ThemedText type="title">Perfil</ThemedText></ThemedView>
+        <Appbar.Header>
+            <Appbar.Content title="Perfil"/>
+            <Appbar.Action
+                icon="dots-vertical"
+                onPress={() => {
+                    router.push("settings");
+                }}
+            />
+        </Appbar.Header>
     );
 }
-
-const styles = StyleSheet.create({
-    headerImage: {
-        color: '#808080',
-        bottom: -90,
-        left: -35,
-        position: 'absolute',
-    },
-    titleContainer: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-});
