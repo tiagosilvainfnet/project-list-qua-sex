@@ -7,6 +7,9 @@ export default function SettingsScreen() {
     }
 
     return (
-        <Button onPress={logout}>Sair</Button>
+        <>
+            <Button onPress={logout}>Sair</Button>
+            <Button onPress={() => router.navigate('components')}>Componentes</Button>
+        </>
     );
 }
