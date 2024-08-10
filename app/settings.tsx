@@ -1,4 +1,4 @@
-import { Button, Text } from 'react-native-paper';
+import { Button } from '@/components';
 import { router } from 'expo-router';
 
 export default function SettingsScreen() {
@@ -7,6 +7,9 @@ export default function SettingsScreen() {
     }
 
     return (
-        <Button onPress={logout}>Sair</Button>
+        <>
+            <Button onPress={logout}>Sair</Button>
+            <Button onPress={() => router.navigate('components')}>Componentes</Button>
+        </>
     );
 }
