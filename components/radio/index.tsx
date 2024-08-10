@@ -17,9 +17,9 @@ const Radio = (props: any) => {
                                 key={index}
                                 value={radio.value}
                                 status={props.valueChecked === radio.value ? 'checked' : 'unchecked'}
-                                onPress={() => props.setValueChecked(radio.value)}
+                                onPress={() => radio.setChecked(radio.value)}
                             />
-                            { radio.label && <Text onPress={() => props.setValueChecked(radio.value)}>{radio.label}</Text> }
+                            { radio.label && <Text onPress={() => radio.setChecked(radio.value)}>{radio.label}</Text> }
                         </View>
                     );
                 })

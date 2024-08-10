@@ -4,9 +4,6 @@ import {Card as Cd, Button, Text} from 'react-native-paper';
 const Card = (props: any) => {
     // @ts-ignore
     return  <Cd>
-                { props.source ?
-                    <Cd.Cover {...props} /> : null
-                }
                 {
                     props.texts?.length > 0 ?
                         // @ts-ignore
