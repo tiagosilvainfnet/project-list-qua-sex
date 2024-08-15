@@ -15,7 +15,7 @@ import {
 } from "@/components";
 import React from "react";
 import {MD3Colors } from 'react-native-paper';
-import {ScrollView, ScrollViewComponent} from "react-native";
+import {ScrollView} from "react-native";
 
 // @ts-ignore
 const Components = () => {
