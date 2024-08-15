@@ -16,12 +16,16 @@ const Menu = (props: any) => {
                                     leadingIcon="redo"
                                     {...item}
                                     onPress={() => {
-                                        item.onPress();
+                                        props.onPress();
                                         props.setVisible(false);
                                     }}/>
                             })
                         }
                     </Surface> : null
+}
+
+Menu.defaultProps = {
+    onPress: () => {}
 }
 
 export default Menu;

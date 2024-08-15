@@ -22,11 +22,6 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
-    // if(isLoggedIn()){
-    //   router.replace('(tabs)');
-    // }else{
-    //   router.replace('login');
-    // }
   }, [loaded]);
 
   if (!loaded) {
@@ -39,7 +34,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }}/>
-        <Stack.Screen name="settings" />
+        <Stack.Screen name="settings" options={{ headerShown: false }}/>
         <Stack.Screen name="components" />
         <Stack.Screen name="+not-found" />
       </Stack>
