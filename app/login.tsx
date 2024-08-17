@@ -65,6 +65,14 @@ export default function LoginScreen() {
                         Entrar
                     </Button>
                 </Grid>
+                <Grid style={{
+                    ...styles.padding,
+                    ...styles.container,
+                    textAlign: 'center'
+                }}>
+                    {/*@ts-ignore*/}
+                    <Button>Esqueci minha senha</Button>
+                </Grid>
             </Grid>
         </ScrollView>
     );
