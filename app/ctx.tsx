@@ -5,11 +5,13 @@ import {router} from "expo-router";
 const AuthContext = createContext<{
     signIn: () => void;
     signOut: () => void;
+    signUp: () => void;
     session?: string | null;
     isLoading: boolean;
 }>({
     signIn: () => null,
     signOut: () => null,
+    signUp: () => null,
     session: null,
     isLoading: false,
 });
@@ -40,6 +42,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
                 signOut: () => {
                     setSession(null);
                     return router.replace("/login");
+                },
+                signUp: () => {
+                    // Perform sign-in logic here
+                    setSession('xxx');
+                    return router.replace("(tabs)");
                 },
                 session,
                 isLoading,
