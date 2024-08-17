@@ -1,8 +1,14 @@
-import {Appbar} from "react-native-paper";
+import {Appbar, useTheme} from "react-native-paper";
 import {router} from "expo-router";
 
 const AppBar = (props: any) => {
-    return <Appbar.Header>
+    const theme = useTheme();
+
+    return <Appbar.Header
+                style={{
+                    backgroundColor: theme.colors.background,
+                }}
+            >
                 {
                     props.back ? <Appbar.BackAction onPress={() => router.back()}/> : null
                 }

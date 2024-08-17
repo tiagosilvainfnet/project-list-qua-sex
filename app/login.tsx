@@ -1,5 +1,5 @@
 import {Text, View} from 'react-native';
-import {Button} from "@/components";
+import {Button, Grid, TextInput} from "@/components";
 import {useSession} from "@/app/ctx";
 import {router} from "expo-router";
 
@@ -13,9 +13,9 @@ export default function LoginScreen() {
             justifyContent: 'center',
             height: '100%'
         }}>
-            <Text>
-                Login
-            </Text>
+            <Grid>
+                <TextInput />
+            </Grid>
             <Button onPress={signIn}>
                 Entrar
             </Button>

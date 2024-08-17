@@ -1,13 +1,14 @@
 import {Redirect, Tabs} from 'expo-router';
 import React from 'react';
 import { TabBarIcon } from "@/components";
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import {useSession} from "@/app/ctx";
 import {Text} from "react-native";
+import {useTheme} from "react-native-paper";
 
 export default function TabLayout() {
     const { session, isLoading } = useSession();
+    const theme = useTheme();
+
 
     if(isLoading){
         return <Text>Carregando...</Text>
@@ -17,12 +18,13 @@ export default function TabLayout() {
         return <Redirect href="/login" />
     }
 
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarStyle: {
+            backgroundColor: theme.colors.background,
+        },
         headerShown: false,
       }}>
         <Tabs.Screen
