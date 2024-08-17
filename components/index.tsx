@@ -15,3 +15,4 @@ export { default as List } from './list';
 export { default as Grid } from './grid';
 export { default as Topbar } from './navigation/topbar';
 export { default as Menu } from './navigation/menu';
+export { default as Body } from './body';
