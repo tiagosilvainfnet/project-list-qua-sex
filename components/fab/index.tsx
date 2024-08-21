@@ -1,8 +1,8 @@
-import {FAB, Portal, PaperProvider, FABProps, FABGroupProps} from 'react-native-paper';
+import {FAB, Portal, PaperProvider} from 'react-native-paper';
 import React from "react";
 
 const Fab = (props: any) => {
-    return props.actions.length > 0 ?
+    return props.actions && props.actions.length > 0 ?
             <PaperProvider>
                 <Portal>
                     <FAB.Group
