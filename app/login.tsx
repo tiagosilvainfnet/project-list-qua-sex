@@ -3,6 +3,7 @@ import {Avatar, Button, Grid, TextInput} from "@/components";
 import {useSession} from "@/app/ctx";
 import {Link} from "expo-router";
 import {useState} from "react";
+import {Text} from "react-native-paper";
 
 export default function LoginScreen() {
     const { signIn } = useSession();
@@ -22,6 +23,16 @@ export default function LoginScreen() {
                     ...styles.padding
                 }}>
                     <Avatar size={200} source={require('../assets/images/logo.jpg')}/>
+                </Grid>
+                <Grid style={{
+                    ...styles.padding,
+                    ...styles.container,
+                    textAlign: 'center',
+                    width: '100%'
+                }}>
+                    <Text style={{
+                        fontSize: 24
+                    }}>Seja Bem-vindo!!!</Text>
                 </Grid>
                 <Grid style={{
                     ...styles.padding
@@ -71,7 +82,9 @@ export default function LoginScreen() {
                     textAlign: 'center'
                 }}>
                     {/*@ts-ignore*/}
-                    <Button>Esqueci minha senha</Button>
+                    <Link href="forgot-password">
+                       Esqueci minha senha
+                    </Link>
                 </Grid>
             </Grid>
         </ScrollView>

@@ -1,15 +1,11 @@
 import {ScrollView} from 'react-native';
 import {Avatar, Button, Grid, TextInput} from "@/components";
-import {useSession} from "@/app/ctx";
 import {Link} from "expo-router";
 import {useState} from "react";
 import {Text} from "react-native-paper";
 
-export default function RegisterScreen() {
-    const { signUp } = useSession();
+export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
 
     return (
         <ScrollView>
@@ -33,7 +29,7 @@ export default function RegisterScreen() {
                 }}>
                     <Text style={{
                         fontSize: 24
-                    }}>Crie sua conta!!!</Text>
+                    }}>Esqueci minha senha</Text>
                 </Grid>
                 <Grid style={{
                     ...styles.padding
@@ -43,25 +39,6 @@ export default function RegisterScreen() {
                         keyboardType="email-address"
                         onChangeText={setEmail}
                         label="E-mail"
-                    />
-                </Grid>
-                <Grid style={{
-                    ...styles.padding
-                }}>
-                    <TextInput
-                        value={username}
-                        onChangeText={setUsername}
-                        label="Nome de Usuário"
-                    />
-                </Grid>
-                <Grid style={{
-                    ...styles.padding
-                }}>
-                    <TextInput
-                        value={password}
-                        onChangeText={setPassword}
-                        label="Senha"
-                        secureTextEntry={true}
                     />
                 </Grid>
                 <Grid style={{
@@ -81,8 +58,7 @@ export default function RegisterScreen() {
                         style={{
                             borderRadius: 0
                         }}
-                        mode="contained"
-                        onPress={signUp}>
+                        mode="contained">
                         Cadastrar
                     </Button>
                 </Grid>
