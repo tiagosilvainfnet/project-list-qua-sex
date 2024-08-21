@@ -3,6 +3,7 @@ import {Avatar, Button, Grid, TextInput} from "@/components";
 import {useSession} from "@/app/ctx";
 import {Link} from "expo-router";
 import {useState} from "react";
+import {Text} from "react-native-paper";
 
 export default function RegisterScreen() {
     const { signUp } = useSession();
@@ -23,6 +24,16 @@ export default function RegisterScreen() {
                     ...styles.padding
                 }}>
                     <Avatar size={200} source={require('../assets/images/logo.jpg')}/>
+                </Grid>
+                <Grid style={{
+                    ...styles.padding,
+                    ...styles.container,
+                    textAlign: 'center',
+                    width: '100%'
+                }}>
+                    <Text style={{
+                        fontSize: 24
+                    }}>Crie sua conta!!!</Text>
                 </Grid>
                 <Grid style={{
                     ...styles.padding
