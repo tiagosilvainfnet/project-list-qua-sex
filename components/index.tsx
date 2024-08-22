@@ -15,4 +15,5 @@ export { default as List } from './list';
 export { default as Grid } from './grid';
 export { default as Topbar } from './navigation/topbar';
 export { default as Menu } from './navigation/menu';
+export { default as RadioGroup } from './radio/radiogroup';
 export { default as Body } from './body';

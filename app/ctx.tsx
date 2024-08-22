@@ -1,5 +1,5 @@
 import { useContext, createContext, type PropsWithChildren } from 'react';
-import { useStorageState } from './useStorageState';
+import {setStorageItemAsync, useStorageState} from './useStorageState';
 import {router} from "expo-router";
 
 const AuthContext = createContext<{
@@ -8,12 +8,19 @@ const AuthContext = createContext<{
     signUp: () => void;
     session?: string | null;
     isLoading: boolean;
+    changeTheme: (theme: string) => void;
+    theme?: string | null;
+    isLoadingTheme: boolean;
 }>({
     signIn: () => null,
     signOut: () => null,
     signUp: () => null,
     session: null,
     isLoading: false,
+    changeTheme: async (theme: string) => null,
+    theme: null,
+    isLoadingTheme: false,
+    // @ts-ignore
 });
 
 // This hook can be used to access the user info.
@@ -30,6 +37,7 @@ export function useSession() {
 
 export function SessionProvider({ children }: PropsWithChildren) {
     const [[isLoading, session], setSession] = useStorageState('session');
+    const [[isLoadingTheme, theme], setTheme] = useStorageState('theme');
 
     return (
         <AuthContext.Provider
@@ -37,6 +45,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
                 signIn: () => {
                     // Perform sign-in logic here
                     setSession('xxx');
+                    // @ts-ignore
                     return router.replace("(tabs)");
                 },
                 signOut: () => {
@@ -46,10 +55,16 @@ export function SessionProvider({ children }: PropsWithChildren) {
                 signUp: () => {
                     // Perform sign-in logic here
                     setSession('xxx');
+                    // @ts-ignore
                     return router.replace("(tabs)");
+                },
+                changeTheme: async (theme: string) => {
+                    await setStorageItemAsync('theme', theme);
                 },
                 session,
                 isLoading,
+                theme,
+                isLoadingTheme,
             }}>
             {children}
         </AuthContext.Provider>
