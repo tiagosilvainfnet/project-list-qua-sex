@@ -9,7 +9,6 @@ export default function TabLayout() {
     const { session, isLoading } = useSession();
     const theme = useTheme();
 
-
     if(isLoading){
         return <Text>Carregando...</Text>
     }
