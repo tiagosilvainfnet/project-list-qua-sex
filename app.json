@@ -37,8 +37,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "cameraPermission": "Permitir $(PRODUCT_NAME) acessar sua câmera",
+          "microphonePermission": "Permitir $(PRODUCT_NAME) acessar sua câmera",
           "recordAudioAndroid": true
         }
       ]
