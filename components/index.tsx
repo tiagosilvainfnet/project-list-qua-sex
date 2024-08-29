@@ -16,4 +16,7 @@ export { default as Grid } from './grid';
 export { default as Topbar } from './navigation/topbar';
 export { default as Menu } from './navigation/menu';
 export { default as RadioGroup } from './radio/radiogroup';
-export { default as Body } from './body';
+export { default as Text } from './text';
+export { default as Dialog } from './dialog';
+export { default as Camera } from './camera';
+export { default as Modal } from './modal';
