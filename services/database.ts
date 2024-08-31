@@ -5,6 +5,21 @@ const getDb = async () => {
     return await SQLite.openDatabaseAsync(process.env.EXPO_PUBLIC_DATABASE_SQLITE);
 }
 
+const createTable = async (table: string) => {
+    const db = await getDb();
+    await db.execAsync(`
+        PRAGMA journal_mode = WAL;
+        CREATE TABLE IF NOT EXISTS ${table} (
+            uid INTEGER PRIMARY KEY NOT NULL, 
+            email TEXT NOT NULL, 
+            displayName TEXT, 
+            photoURL TEXT, 
+            phoneNumber TEXT, 
+            photoURL TEXT, 
+            photoURL TEXT,
+            createdAt TEXT,
+        );
+    `);
 const createTableUser = async() => {
     try{
         const db = await getDb();
