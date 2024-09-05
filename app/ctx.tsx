@@ -3,6 +3,7 @@ import {setStorageItemAsync, useStorageState} from './useStorageState';
 import {router} from "expo-router";
 import {FirebaseApp, initializeApp} from "firebase/app";
 import {login} from "@/services/auth";
+import {createTableUser, dropTable} from "@/services/database";
 
 const firebaseConfig = {
     apiKey: process.env.EXPO_PUBLIC_API_KEY,
@@ -64,6 +65,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
                 },
                 signOut: async () => {
                     setSession(null);
+                    await dropTable("user");
+                    await createTableUser();
                     return router.replace("/login");
                 },
                 signUp: () => {

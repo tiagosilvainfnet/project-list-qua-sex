@@ -6,7 +6,7 @@ import {useColorScheme} from "react-native";
 import {darkTheme, lightTheme} from "@/constants/Theme";
 import {useStorageState} from "@/app/useStorageState";
 import {useEffect} from "react";
-import {createTable} from "@/services/database";
+import {createTableUser} from "@/services/database";
 
 export default function RootLayout() {
     const themeType = useColorScheme();
@@ -17,7 +17,7 @@ export default function RootLayout() {
     }
 
     useEffect(() => {
-        createTable('user');
+        createTableUser();
     }, []);
 
     // @ts-ignore
