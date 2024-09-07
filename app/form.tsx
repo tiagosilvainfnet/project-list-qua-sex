@@ -4,18 +4,21 @@ import {useEffect, useRef, useState} from "react";
 import {ScrollView} from "react-native";
 import {useTheme} from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
+import {insert, update} from "@/services/database";
+import {ItemIterface} from "@/interfaces/Item";
 
 export default function FormScreen() {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const params = useLocalSearchParams();
     const [dialogVisible, setDialogVisible] = useState(false);
-    const [data, setData] = useState({
-        id: null,
+    const [data, setData] = useState<ItemIterface>({
+        uid: null,
         title: null,
         description: null,
         images: []
     });
+
     const [cameraVisible, setCameraVisible] = useState(false);
     const [messageText, setMessageText] = useState(null);
     const [imageToDelete, setImageToDelete] = useState(null);
@@ -31,11 +34,49 @@ export default function FormScreen() {
         loadData();
     }, []);
 
+    const _update = async () => {
+        setLoading(true);
+
+        try{
+            let uid = data.uid
+
+            if (uid) {
+                await update('item', {
+                    title: data.title,
+                    description: data.description,
+                }, uid)
+
+                // TODO: Dropar imagens e recriar ou fazer update
+                // data.images.map((image: string) => {
+                //     await update('item_image', {
+                //         image: data.description,
+                //     }, uid)
+                // })
+            }else {
+                uid = await insert('item', {
+                    title: data.title,
+                    description: data.description,
+                })
+                data.images.map((image: string) => {
+                    await insert('item_image', {
+                        image: data.description,
+                        itemUid: uid
+                    })
+                })
+            }
+            setMessageText(data.uid ? "Dado atualizado com sucesso!!!" : "Dado criado com sucesso!!!")
+        }catch (err){
+            setMessageText(data.uid ? "Um erro ocorreu ao atualizar o dado.": "Um erro ocorreu ao criar o dado.")
+        }
+
+        setLoading(false);
+    }
+
     const loadData = async () => {
-        if(params.id){
+        if(params.uid){
             setData((v: any) => ({
                 ...v,
-                id: params.id,
+                uid: params.uid,
                 title: "Teste",
                 description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
                 images: [
@@ -84,7 +125,7 @@ export default function FormScreen() {
         <Grid style={{
             ...styles.padding
         }}>
-            <Text variant="headlineLarge">{ data.id ? "Cadastrar item" : "Editar item" }</Text>
+            <Text variant="headlineLarge">{ data.uid ? "Cadastrar item" : "Editar item" }</Text>
         </Grid>
         <ScrollView>
             <Grid style={{
@@ -198,7 +239,7 @@ export default function FormScreen() {
                     }}
                     mode="contained"
                     onPress={() => {}}>
-                    {data.id ? "Editar" : "Cadastrar"}
+                    {data.uid ? "Editar" : "Cadastrar"}
                 </Button>
             </Grid>
         </ScrollView>

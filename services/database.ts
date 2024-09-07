@@ -5,6 +5,16 @@ const getDb = async () => {
     return await SQLite.openDatabaseAsync(process.env.EXPO_PUBLIC_DATABASE_SQLITE);
 }
 
+const generateUID = (length: number) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let uid = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * chars.length);
+        uid += chars[randomIndex];
+    }
+    return uid;
+}
+
 const createTableUser = async() => {
     try{
         const db = await getDb();
@@ -16,6 +26,7 @@ const createTableUser = async() => {
                 emailVerified TEXT,
                 displayName TEXT, 
                 photoURL TEXT, 
+                username TEXT, 
                 phoneNumber TEXT, 
                 createdAt TEXT, 
                 sync INTEGER
@@ -37,9 +48,40 @@ const dropTable = async (table: string) => {
     }
 }
 
-const insert = async (table: string, data: any) => {
+const update = async (table: string, data: any, id: number) => {
     try{
         const db = await getDb();
+        const keys = Object.keys(data);
+        const values= Object.values(data).filter((v) => v !== "");
+
+        const columns = keys.filter((v) => v !== "").map((v, index) => `${v} = ?`).join(", ");
+
+        const query = `UPDATE ${table} SET ${columns.substring(0, columns.length)} WHERE uid = '${id}'`;
+        await db.runAsync(query, values);
+        syncFirebase();
+        console.log("Dado atualizado com sucesso")
+    }catch (err){
+        console.error("Error insert:", err)
+        throw err;
+    }
+}
+
+const syncFirebase = async () => {
+
+}
+
+const syncDropItem = async (uid: string) => {
+
+}
+
+const insert = async (table: string, data: any): string => {
+    try{
+        const db = await getDb();
+
+        if (data.uid === undefined || data.uid === null){
+            data.uid = generateUID(28);
+        }
+
         const keys = Object.keys(data);
         const values= Object.values(data).filter((v) => v !== "");
 
@@ -49,9 +91,12 @@ const insert = async (table: string, data: any) => {
         const query = `INSERT INTO ${table} (${columns}) VALUES (${interrogations})`;
 
         await db.runAsync(query, values);
+        syncFirebase();
         console.log("Dado inserido com sucesso")
+        return data.uid;
     }catch (err){
         console.error("Error insert:", err)
+        throw err;
     }
 }
 
@@ -76,5 +121,6 @@ export {
     insert,
     createTableUser,
     dropTable,
-    select
+    select,
+    update
 }
