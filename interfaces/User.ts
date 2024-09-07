@@ -3,9 +3,9 @@ export interface UserInterface {
     emailVerified: string;
     displayName: string;
     username?: string;
-    uid: string;
+    uid: number;
     photoURL: string;
     phoneNumber: string;
-    createdAt?: string;
-    sync?: number;
+    createdAt: string;
+    sync: number;
 }

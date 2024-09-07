@@ -1,15 +1,28 @@
 import {Avatar, Button, Camera, Fab, Grid, TextInput, Topbar} from "@/components";
-import {useRef, useState} from "react";
+import {select} from "@/services/database";
+import {useRef, useState, useEffect} from "react";
 import * as ImagePicker from "expo-image-picker";
+import {UserInterface} from "@/interfaces/User";
 
 export default function ProfileScreen() {
     const [image, setImage] = useState(null);
     const [cameraVisible, setCameraVisible] = useState(false);
     const cameraRef = useRef(null);
     const [loading, setLoading] = useState(false);
-    const [data, setData] = useState({
-        image: null
+    const [data, setData] = useState<UserInterface>({
+        photoURL: null
     });
+    const getUser = async () => {
+        const d = await select("user", ["uid", "emailVerified", "displayName", "email", "photoURL", "phoneNumber", "createdAt"], null, false);
+        setData((v) => ({
+            ...v,
+            ...d
+        }))
+    }
+
+    useEffect(() => {
+        getUser();
+    }, []);
 
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
@@ -24,7 +37,7 @@ export default function ProfileScreen() {
         if (!result.canceled) {
             setData((v: any) => ({
                 ...v,
-                image: result.assets[0].uri
+                photoURL: result.assets[0].uri
             }));
         }
 
@@ -51,7 +64,7 @@ export default function ProfileScreen() {
                                 ...styles.containerCenterImage
                             }}>
                                 {
-                                    data.image ? <Avatar size={230} source={{uri: data.image}} /> : <Avatar size={230} icon="account" />
+                                    data.photoURL ? <Avatar size={230} source={{uri: data.photoURL}} /> : <Avatar size={230} icon="account" />
                                 }
                                 <Fab
                                     onPress={pickImage}
@@ -76,13 +89,7 @@ export default function ProfileScreen() {
                     }}>
                         <TextInput
                             label="Nome"
-                        />
-                    </Grid>
-                    <Grid style={{
-                        ...styles.padding
-                    }}>
-                        <TextInput
-                            label="Sobrenome"
+                            value={data.displayName}
                         />
                     </Grid>
                     <Grid style={{
@@ -90,6 +97,7 @@ export default function ProfileScreen() {
                     }}>
                         <TextInput
                             label="Nome de usuário"
+                            value={data.username}
                         />
                     </Grid>
                     <Grid style={{
@@ -98,6 +106,17 @@ export default function ProfileScreen() {
                         <TextInput
                             label="E-mail"
                             keyboardType="email-address"
+                            value={data.email}
+                            disabled
+                        />
+                    </Grid>
+                    <Grid style={{
+                        ...styles.padding
+                    }}>
+                        <TextInput
+                            label="Telefone"
+                            keyboardType="numeric"
+                            value={data.phoneNumber}
                         />
                     </Grid>
                     <Grid style={{
