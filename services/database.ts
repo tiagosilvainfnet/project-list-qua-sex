@@ -1,24 +1,7 @@
 import * as SQLite from 'expo-sqlite';
+import * as Network from 'expo-network';
 
-const getDb = async () => {
-    // @ts-ignore
-    return await SQLite.openDatabaseAsync(process.env.EXPO_PUBLIC_DATABASE_SQLITE);
-}
-
-const generateUID = (length: number) => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let uid = '';
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * chars.length);
-        uid += chars[randomIndex];
-    }
-    return uid;
-}
-
-const createTableUser = async() => {
-    try{
-        const db = await getDb();
-            await db.execAsync(`
+const queryUser = `
             PRAGMA journal_mode = WAL;
             CREATE TABLE IF NOT EXISTS user (
                 uid TEXT PRIMARY KEY NOT NULL, 
@@ -31,8 +14,63 @@ const createTableUser = async() => {
                 createdAt TEXT, 
                 sync INTEGER
             );
-        `);
-        console.log("Tabela de usuário criada");
+        `
+const queryItem = `
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS item (
+                uid TEXT PRIMARY KEY NOT NULL, 
+                title TEXT NOT NULL, 
+                description TEXT,
+                createdAt TEXT, 
+                sync INTEGER
+            );
+        `;
+
+const queryItemImage = `
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS item_image (
+                uid TEXT PRIMARY KEY NOT NULL, 
+                image TEXT NOT NULL, 
+                itemUid TEXT NOT NULL,
+                createdAt TEXT, 
+                sync INTEGER,
+                FOREIGN KEY(itemUid) REFERENCES item(uid)
+            );
+        `;
+
+const verifyConnection = async () => {
+    const airplaneMode: boolean = await Network.isAirplaneModeEnabledAsync();
+    const network: NetworkState = await Network.getNetworkStateAsync();
+
+    console.log(network);
+
+    return network.isConnected && !airplaneMode;
+}
+
+const getDb = async () => {
+    // @ts-ignore
+    return await SQLite.openDatabaseAsync(process.env.EXPO_PUBLIC_DATABASE_SQLITE, {
+        useNewConnection: true
+    });
+}
+
+const generateUID = (length: number) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let uid = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * chars.length);
+        uid += chars[randomIndex];
+    }
+    return uid;
+}
+
+const createTables = async() => {
+    try{
+        const db = await getDb();
+        await db.execAsync(queryUser);
+        await db.execAsync(queryItem);
+        await db.execAsync(queryItemImage);
+        console.log("Tabelas criadas");
     }catch(err){
         console.error("Database error: ", err)
     }
@@ -50,6 +88,7 @@ const dropTable = async (table: string) => {
 
 const update = async (table: string, data: any, id: number) => {
     try{
+        console.log(data);
         const db = await getDb();
         const keys = Object.keys(data);
         const values= Object.values(data).filter((v) => v !== "");
@@ -66,15 +105,40 @@ const update = async (table: string, data: any, id: number) => {
     }
 }
 
+const drop = async (table: string, where: string) => {
+    try{
+        const db = await getDb();
+
+        const query = `DELETE FROM ${table} where ${where};`
+        await db.runAsync(query);
+
+        const whereSplit = where.split("=");
+        const field = whereSplit[0]
+        const value = whereSplit[1].replace(/['"]+/g, '')
+        await syncDropItem(field, value);
+    }catch (err){
+        console.error("Error insert:", err)
+        throw err;
+    }
+}
+
 const syncFirebase = async () => {
-
+    const statusConnection = await verifyConnection();
+    console.log(statusConnection);
+    if(statusConnection) {
+        console.log("Atualiza o firebase");
+    }
 }
 
-const syncDropItem = async (uid: string) => {
-
+const syncDropItem = async (field: string, value: string) => {
+    const statusConnection = await verifyConnection();
+    if(statusConnection) {
+        console.log(field);
+        console.log(value);
+    }
 }
 
-const insert = async (table: string, data: any): string => {
+const insert = async (table: string, data: any): Promise<string> => {
     try{
         const db = await getDb();
 
@@ -91,7 +155,7 @@ const insert = async (table: string, data: any): string => {
         const query = `INSERT INTO ${table} (${columns}) VALUES (${interrogations})`;
 
         await db.runAsync(query, values);
-        syncFirebase();
+        await syncFirebase();
         console.log("Dado inserido com sucesso")
         return data.uid;
     }catch (err){
@@ -119,8 +183,9 @@ const select = async (table: string, columns: string[] , where: string, many: bo
 
 export {
     insert,
-    createTableUser,
+    createTables,
     dropTable,
     select,
-    update
+    update,
+    drop
 }

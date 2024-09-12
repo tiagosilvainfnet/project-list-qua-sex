@@ -1,11 +1,11 @@
 import {Button, Camera, Card, Dialog, Grid, IconButton, Snackbar, Text, TextInput, Topbar} from "@/components";
-import {useLocalSearchParams} from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import {useEffect, useRef, useState} from "react";
 import {ScrollView} from "react-native";
 import {useTheme} from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
-import {insert, update} from "@/services/database";
-import {ItemIterface} from "@/interfaces/Item";
+import {drop, insert, select, update} from "@/services/database";
+import {ItemImageInterface, ItemIterface} from "@/interfaces/Item";
 
 export default function FormScreen() {
     const theme = useTheme();
@@ -46,26 +46,34 @@ export default function FormScreen() {
                     description: data.description,
                 }, uid)
 
-                // TODO: Dropar imagens e recriar ou fazer update
-                // data.images.map((image: string) => {
-                //     await update('item_image', {
-                //         image: data.description,
-                //     }, uid)
-                // })
+                await drop("item_image", `itemUid='${uid}'`)
+                for(let image of data.images){
+                    await insert('item_image', {
+                        image: image,
+                        itemUid: uid
+                    })
+                }
             }else {
                 uid = await insert('item', {
                     title: data.title,
                     description: data.description,
                 })
-                data.images.map((image: string) => {
-                    await insert('item_image', {
-                        image: data.description,
-                        itemUid: uid
-                    })
-                })
+
+                if(data.images?.length > 0){
+                    for(let image of data.images){
+                        await insert('item_image', {
+                            image: image,
+                            itemUid: uid
+                        })
+                    }
+                }
             }
-            setMessageText(data.uid ? "Dado atualizado com sucesso!!!" : "Dado criado com sucesso!!!")
+            setMessageText(data.uid ? "Dado atualizado com sucesso!!!" : "Dado criado com sucesso!!!");
+            setTimeout(() => {
+                router.back();
+            }, 2000);
         }catch (err){
+            console.log(err)
             setMessageText(data.uid ? "Um erro ocorreu ao atualizar o dado.": "Um erro ocorreu ao criar o dado.")
         }
 
@@ -74,19 +82,15 @@ export default function FormScreen() {
 
     const loadData = async () => {
         if(params.uid){
+            const d: ItemIterface = await select("item", [ "uid", "title", "description", "createdAt", "sync"], `uid='${params.uid}'`, false);
+            const images: Array<ItemImageInterface> = await select("item_image", [ "uid", "image", "itemUid", "createdAt", "sync"], `itemUid='${params.uid}'`, true);
+
+            console.log(images)
             setData((v: any) => ({
                 ...v,
+                ...d,
+                images: images.map(image => image.image),
                 uid: params.uid,
-                title: "Teste",
-                description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-                images: [
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg"
-                ]
             }));
         }
     }
@@ -125,7 +129,7 @@ export default function FormScreen() {
         <Grid style={{
             ...styles.padding
         }}>
-            <Text variant="headlineLarge">{ data.uid ? "Cadastrar item" : "Editar item" }</Text>
+            <Text variant="headlineLarge">{ data && data.uid ? "Editar item" : "Cadastrar item" }</Text>
         </Grid>
         <ScrollView>
             <Grid style={{
@@ -238,8 +242,8 @@ export default function FormScreen() {
                         borderRadius: 0
                     }}
                     mode="contained"
-                    onPress={() => {}}>
-                    {data.uid ? "Editar" : "Cadastrar"}
+                    onPress={_update}>
+                    {data && data.uid ? "Editar" : "Cadastrar"}
                 </Button>
             </Grid>
         </ScrollView>

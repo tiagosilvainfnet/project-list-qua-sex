@@ -3,10 +3,6 @@ import {insert} from "@/services/database";
 import {getAuth, IdTokenResult, signInWithEmailAndPassword, UserCredential} from "@firebase/auth";
 import {UserInterface} from "@/interfaces/User";
 
-const isLoggedIn = (): boolean => {
-    return true;
-}
-
 const login = async (email: string, password: string, setSession: any) => {
     const auth = getAuth();
 
@@ -35,4 +31,4 @@ const login = async (email: string, password: string, setSession: any) => {
     }
 }
 
-export { isLoggedIn, login };
+export { login };
