@@ -56,7 +56,7 @@ export default function FormScreen() {
             }else {
                 uid = await insert('item', {
                     title: data.title,
-                    description: data.description,
+                    description: data.title,
                 })
 
                 if(data.images?.length > 0){
@@ -89,6 +89,8 @@ export default function FormScreen() {
             setData((v: any) => ({
                 ...v,
                 ...d,
+                title: d.title,
+                description: d.description,
                 images: images.map(image => image.image),
                 uid: params.uid,
             }));

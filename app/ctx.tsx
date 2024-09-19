@@ -66,6 +66,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
                 signOut: async () => {
                     setSession(null);
                     await dropTable("user");
+                    await dropTable("item");
+                    await dropTable("item_image");
                     await createTables();
                     return router.replace("/login");
                 },

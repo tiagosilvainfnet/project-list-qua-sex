@@ -1,5 +1,5 @@
 import {router} from "expo-router";
-import {insert} from "@/services/database";
+import {insert, populateDatabase} from "@/services/database";
 import {getAuth, IdTokenResult, signInWithEmailAndPassword, UserCredential} from "@firebase/auth";
 import {UserInterface} from "@/interfaces/User";
 
@@ -24,6 +24,7 @@ const login = async (email: string, password: string, setSession: any) => {
         };
 
         await insert('user', _user);
+        await populateDatabase(user.uid);
         return router.replace("(tabs)");
     }catch (error) {
         console.error('Error during login:', error);

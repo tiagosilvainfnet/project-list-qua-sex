@@ -6,7 +6,7 @@ import {useColorScheme} from "react-native";
 import {darkTheme, lightTheme} from "@/constants/Theme";
 import {useStorageState} from "@/app/useStorageState";
 import {useEffect} from "react";
-import {createTables} from "@/services/database";
+import {createTables, syncBothDatabase} from "@/services/database";
 
 export default function RootLayout() {
     const themeType = useColorScheme();
@@ -18,6 +18,7 @@ export default function RootLayout() {
 
     useEffect(() => {
         createTables();
+        syncBothDatabase();
     }, []);
 
     // @ts-ignore
