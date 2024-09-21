@@ -2,15 +2,16 @@ import {ScrollView} from 'react-native';
 import {Avatar, Button, Grid, Snackbar, TextInput} from "@/components";
 import {useSession} from "@/app/ctx";
 import {Link} from "expo-router";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {Text} from "react-native-paper";
+import {createTables, dropTables, syncBothDatabase} from "@/services/database";
 
 export default function LoginScreen() {
     const { signIn } = useSession();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('tiago@gmail.com');
+    const [password, setPassword] = useState('123456');
     const [helpData, setHelpData] = useState({
         email: null,
         password: null
@@ -22,6 +23,16 @@ export default function LoginScreen() {
             [name]: text.length === 0 ? "Campo obrigatório" : null,
         }));
     }
+
+    const initDatabases = async () => {
+        await dropTables();
+        await createTables();
+        await syncBothDatabase();
+    }
+
+    useEffect(() => {
+        initDatabases();
+    }, []);
 
     return  <>
                 <ScrollView>

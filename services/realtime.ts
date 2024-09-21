@@ -19,7 +19,7 @@ const loadData = async (table) => {
     if (snapshot.exists()) {
         return snapshot.val();
     } else {
-        return null;
+        return [];
     }
 }
 

@@ -9,7 +9,6 @@ const login = async (email: string, password: string, setSession: any) => {
     try{
         const response: UserCredential = await signInWithEmailAndPassword(auth, email, password);
         const user: any = response.user.toJSON();
-        setSession(user.stsTokenManager.accessToken);
 
         const _user: UserInterface = {
             email: user.email ? user.email : "",
@@ -23,8 +22,9 @@ const login = async (email: string, password: string, setSession: any) => {
             sync: 1
         };
 
-        await insert('user', _user);
+        await insert('user', _user, false);
         await populateDatabase(user.uid);
+        setSession(user.stsTokenManager.accessToken);
         return router.replace("(tabs)");
     }catch (error) {
         console.error('Error during login:', error);

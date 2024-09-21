@@ -6,6 +6,8 @@ import {useTheme} from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
 import {drop, insert, select, update} from "@/services/database";
 import {ItemImageInterface, ItemIterface} from "@/interfaces/Item";
+import {uploadImageToFirebaseStorage} from "@/services/storage";
+import {UserInterface} from "@/interfaces/User";
 
 export default function FormScreen() {
     const theme = useTheme();
@@ -44,27 +46,31 @@ export default function FormScreen() {
                 await update('item', {
                     title: data.title,
                     description: data.description,
-                }, uid)
+                }, uid, true)
 
-                await drop("item_image", `itemUid='${uid}'`)
+                const imagesIds: any = await select("item_image", ["uid", "image"], `itemUid='${uid}'`, true);
+                for(let imageIds of imagesIds){
+                    await drop("item_image", `uid='${imageIds.uid}'`, true, imageIds.image);
+                }
+
                 for(let image of data.images){
                     await insert('item_image', {
                         image: image,
                         itemUid: uid
-                    })
+                    }, true);
                 }
             }else {
                 uid = await insert('item', {
                     title: data.title,
                     description: data.title,
-                })
+                }, true)
 
                 if(data.images?.length > 0){
                     for(let image of data.images){
                         await insert('item_image', {
                             image: image,
                             itemUid: uid
-                        })
+                        }, true)
                     }
                 }
             }
@@ -85,7 +91,6 @@ export default function FormScreen() {
             const d: ItemIterface = await select("item", [ "uid", "title", "description", "createdAt", "sync"], `uid='${params.uid}'`, false);
             const images: Array<ItemImageInterface> = await select("item_image", [ "uid", "image", "itemUid", "createdAt", "sync"], `itemUid='${params.uid}'`, true);
 
-            console.log(images)
             setData((v: any) => ({
                 ...v,
                 ...d,

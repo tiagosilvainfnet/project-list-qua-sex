@@ -9,7 +9,9 @@ export default function HomeScreen() {
 
     const loadData = async () => {
         const d: Array<ItemIterface> = await select("item", [ "uid", "title", "description", "createdAt", "sync"], "", true);
-        setData(d);
+        if (d.length > 0) {
+            setData(d);
+        }
     }
 
     useEffect(() => {

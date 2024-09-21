@@ -26,7 +26,7 @@ export default function ProfileScreen() {
         setLoading(true);
 
         try{
-            await update('user', data, data.uid)
+            await update('user', data, data.uid, true)
             setMessage("Dados atualizados com sucesso!!!")
         }catch (err){
             setMessage("Um erro ocorreu ao atualizar o perfil.")

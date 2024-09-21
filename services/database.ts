@@ -1,6 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import * as Network from 'expo-network';
-import {getData, loadData, updateData} from "@/services/realtime";
+import {deleteData, getData, loadData, updateData} from "@/services/realtime";
+import {object} from "prop-types";
+import {deleteImage, uploadImageToFirebaseStorage} from "@/services/storage";
 
 const queryUser = `
             PRAGMA journal_mode = WAL;
@@ -89,10 +91,18 @@ const dropTable = async (table: string) => {
     }
 }
 
-const update = async (table: string, data: any, uid: string) => {
+const dropTables = async () => {
+    dropTable("user");
+    dropTable("item");
+    dropTable("item_image");
+}
+
+const update = async (table: string, data: any, uid: string, enable_sync: boolean) => {
     try{
-        const sync = await syncFirebase(table, data, uid);
-        data.sync = sync ? 1 : 0;
+        if (enable_sync) {
+            const sync = await syncFirebase(table, data, uid);
+            data.sync = sync ? 1 : 0;
+        }
 
         const db = await getDb();
         const keys = Object.keys(data);
@@ -109,17 +119,28 @@ const update = async (table: string, data: any, uid: string) => {
     }
 }
 
-const drop = async (table: string, where: string) => {
+const drop = async (table: string, where: string, hasImage: boolean, image: string) => {
     try{
-        const db = await getDb();
+        const statusConnection = await verifyConnection();
+        if(statusConnection) {
+            const db = await getDb();
 
-        const query = `DELETE FROM ${table} where ${where};`
-        await db.runAsync(query);
+            const query = `DELETE FROM ${table} where ${where};`
+            await db.runAsync(query);
 
-        const whereSplit = where.split("=");
-        const field = whereSplit[0]
-        const value = whereSplit[1].replace(/['"]+/g, '')
-        await syncDropItem(field, value);
+            const whereSplit = where.split("=");
+            const field = whereSplit[0]
+            const value = whereSplit[1].replace(/['"]+/g, '')
+            await syncDropItem(table, value);
+
+            if (hasImage) {
+                const user = await select("user", ["uid"], null, false);
+                const im = image.split("/");
+                await deleteImage(user.uid, im[im.length - 1]);
+            }
+        } else {
+            throw new Error("Precisa ter conexão com a internet.");
+        }
     }catch (err){
         console.error("Error insert:", err)
         throw err;
@@ -129,29 +150,43 @@ const drop = async (table: string, where: string) => {
 const syncFirebase = async (table, data, uid): Promise<boolean> => {
     const statusConnection = await verifyConnection();
     if(statusConnection) {
-        updateData(table, data, uid);
+        if (Object.keys(data).includes("image") || Object.keys(data).includes("photoURL")) {
+            const field = Object.keys(data).includes("image") ? "image" : "photoURL";
+            const localImage = data[field];
+
+            const user = await select("user", ["uid"], null, false);
+            const im = data[field].split("/");
+            data[field] = await uploadImageToFirebaseStorage(data[field], user.uid, im[im.length - 1]);
+
+            updateData(table, data, uid);
+            data[field] = localImage;
+        }else{
+            updateData(table, data, uid);
+        }
     }
 
     return statusConnection;
 }
 
-const syncDropItem = async (field: string, value: string) => {
+const syncDropItem = async (table:string, uid: string) => {
     const statusConnection = await verifyConnection();
     if(statusConnection) {
-        console.log(field);
-        console.log(value);
+        deleteData(table, uid);
     }
 }
 
-const insert = async (table: string, data: any, ): Promise<string> => {
+const insert = async (table: string, data: any, enable_sync: boolean): Promise<string> => {
     try{
         const db = await getDb();
 
         if (data.uid === undefined || data.uid === null){
             data.uid = generateUID(28);
         }
-        const sync = await syncFirebase(table, data, data.uid);
-        data.sync = sync ? 1 : 0;
+
+        if (enable_sync) {
+            const sync = await syncFirebase(table, data, data.uid);
+            data.sync = sync ? 1 : 0;
+        }
 
         const keys = Object.keys(data);
         const values= Object.values(data).filter((v) => v !== "");
@@ -196,7 +231,7 @@ const populateDatabase = async (uid: string) => {
     const itemImages = await loadData("item_image");
 
     if (user) {
-        await update("user", user, uid);
+        await update("user", user, uid, false);
     }
 
     const itemKeys = Object.keys(items);
@@ -204,14 +239,12 @@ const populateDatabase = async (uid: string) => {
 
     for(let key of itemKeys){
         const item = items[key]
-        // TODO: Modificar para não enviar para a nuvem
-        await insert("item", item);
+        await insert("item", item, false);
     }
 
     for(let key of itemImagesKeys){
         const itemImage = itemImages[key]
-        // TODO: Modificar para não enviar para a nuvem
-        await insert("item_image", itemImage);
+        await insert("item_image", itemImage, false);
     }
 }
 
@@ -228,7 +261,7 @@ const syncBothDatabase = async () => {
 export {
     insert,
     createTables,
-    dropTable,
+    dropTables,
     select,
     update,
     drop,
