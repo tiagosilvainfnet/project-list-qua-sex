@@ -32,7 +32,6 @@ export default function HomeScreen() {
                                 return <List
                                     title={d.title}
                                     description={d.description}
-                                    left={() => <Checkbox />}
                                     right={() => <IconButton
                                                         onPress={() => {
                                                             router.push({ pathname: `/form`, params: { uid: d.uid } });

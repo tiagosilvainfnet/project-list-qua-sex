@@ -3,6 +3,7 @@ import * as Network from 'expo-network';
 import {deleteData, getData, loadData, updateData} from "@/services/realtime";
 import {object} from "prop-types";
 import {deleteImage, uploadImageToFirebaseStorage} from "@/services/storage";
+import {ItemIterface} from "@/interfaces/Item";
 
 const queryUser = `
             PRAGMA journal_mode = WAL;
@@ -41,7 +42,20 @@ const queryItemImage = `
             );
         `;
 
-const verifyConnection = async (): Promise<boolean> => {
+const queryDeleteElement = `
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS elements_deleted (
+                uid TEXT NOT NULL, 
+                name TEXT NOT NULL,
+                user_uid TEXT NOT NULL
+            );
+        `;
+
+const verifyConnection = async (session): Promise<boolean> => {
+    if (!session){
+        return;
+    }
+
     const airplaneMode: boolean = await Network.isAirplaneModeEnabledAsync();
     const network: any = await Network.getNetworkStateAsync();
     const result = network.isConnected && !airplaneMode;
@@ -75,6 +89,7 @@ const createTables = async() => {
         await db.execAsync(queryUser);
         await db.execAsync(queryItem);
         await db.execAsync(queryItemImage);
+        await db.execAsync(queryDeleteElement);
         console.log("Tabelas criadas");
     }catch(err){
         console.error("Database error: ", err)
@@ -95,6 +110,7 @@ const dropTables = async () => {
     dropTable("user");
     dropTable("item");
     dropTable("item_image");
+    // dropTable("elements_deleted");
 }
 
 const update = async (table: string, data: any, uid: string, enable_sync: boolean) => {
@@ -119,27 +135,36 @@ const update = async (table: string, data: any, uid: string, enable_sync: boolea
     }
 }
 
-const drop = async (table: string, where: string, hasImage: boolean, image: string) => {
+const drop = async (table: string, where: string, hasImage: boolean, image: string, enable_sync: boolean) => {
     try{
-        const statusConnection = await verifyConnection();
-        if(statusConnection) {
-            const db = await getDb();
+        const db = await getDb();
 
-            const query = `DELETE FROM ${table} where ${where};`
-            await db.runAsync(query);
+        const query = `DELETE FROM ${table} where ${where};`
+        await db.runAsync(query);
 
-            const whereSplit = where.split("=");
-            const field = whereSplit[0]
-            const value = whereSplit[1].replace(/['"]+/g, '')
+        if (!enable_sync) {
+            return;
+        }
+
+        const whereSplit = where.split("=");
+        const field = whereSplit[0]
+        const value = whereSplit[1].replace(/['"]+/g, '')
+
+
+        const user = await select("user", ["uid"], null, false);
+        const statusConnection = await verifyConnection(true);
+        if(!statusConnection) {
+            await insert('elements_deleted', {
+                uid: value,
+                name: table,
+                user_uid: user.uid
+            }, false);
+        }else{
             await syncDropItem(table, value);
-
             if (hasImage) {
-                const user = await select("user", ["uid"], null, false);
                 const im = image.split("/");
                 await deleteImage(user.uid, im[im.length - 1]);
             }
-        } else {
-            throw new Error("Precisa ter conexão com a internet.");
         }
     }catch (err){
         console.error("Error insert:", err)
@@ -148,7 +173,7 @@ const drop = async (table: string, where: string, hasImage: boolean, image: stri
 }
 
 const syncFirebase = async (table, data, uid): Promise<boolean> => {
-    const statusConnection = await verifyConnection();
+    const statusConnection = await verifyConnection(true);
     if(statusConnection) {
         if (Object.keys(data).includes("image") || Object.keys(data).includes("photoURL")) {
             const field = Object.keys(data).includes("image") ? "image" : "photoURL";
@@ -169,7 +194,7 @@ const syncFirebase = async (table, data, uid): Promise<boolean> => {
 }
 
 const syncDropItem = async (table:string, uid: string) => {
-    const statusConnection = await verifyConnection();
+    const statusConnection = await verifyConnection(true);
     if(statusConnection) {
         deleteData(table, uid);
     }
@@ -208,8 +233,7 @@ const insert = async (table: string, data: any, enable_sync: boolean): Promise<s
 const select = async (table: string, columns: string[] , where: string, many: boolean) => {
     try {
         const columnString: string = columns.join(", ");
-        const whereString = where !== "" && where !== null && where !== undefined ? `where ${where}` : ""
-;
+        const whereString = where !== "" && where !== null && where !== undefined ? `where ${where}` : "";
         const db = await getDb();
         const query: string = `SELECT ${columnString} FROM ${table} ${whereString};`;
 
@@ -224,38 +248,105 @@ const select = async (table: string, columns: string[] , where: string, many: bo
 
 const populateDatabase = async (uid: string) => {
     const tables = [
-        "user", "item", "item_image"
+        "item", "item_image"
     ]
-    const user = await getData("table", uid);
     const items = await loadData("item");
     const itemImages = await loadData("item_image");
-
-    if (user) {
-        await update("user", user, uid, false);
-    }
 
     const itemKeys = Object.keys(items);
     const itemImagesKeys = Object.keys(itemImages);
 
     for(let key of itemKeys){
         const item = items[key]
-        await insert("item", item, false);
+        await insert("item", {
+            title: item.title,
+            description: item.description,
+            uid: key,
+            sync: 1
+        }, false);
     }
 
     for(let key of itemImagesKeys){
         const itemImage = itemImages[key]
-        await insert("item_image", itemImage, false);
+        await insert("item_image", {
+            uid: key,
+            image: itemImage.image,
+            itemUid: itemImage.itemUid,
+            sync: 1
+        }, false);
     }
 }
 
 const syncNow = async () => {
+    const items: Array<ItemIterface> = await select("item", [ "uid", "title", "description", "createdAt", "sync"], "sync=0", true);
+    const itemImages = await select("item_image", [ "uid", "image", "itemUid", "createdAt", "sync"], `sync=0`, true);
+    const elementsDeleted = await select("elements_deleted", [ "uid", "name", "user_uid"], ``, true);
+    // const user = await select("user")
 
+    for(const item of items){
+        await update("item", item, item.uid, true);
+    }
+
+    for(const itemImage of itemImages){
+        await update("item_image", itemImage, itemImage.uid, true);
+    }
+
+    if(elementsDeleted.length > 0){
+        console.log("Dado encontrado")
+        console.log(elementsDeleted)
+    }else{
+        console.log("Dado não encontrado")
+        console.log(elementsDeleted)
+    }
+    for(const elementDeleted of elementsDeleted){
+        try{
+            await deleteData(elementDeleted.name, elementDeleted.uid);
+
+            if (elementDeleted.name === "item_image") {
+                const image = await getData(elementDeleted.name, elementDeleted.uid);
+                await drop("elements_deleted", `uid='${elementDeleted.uid}'`, true, image.image, false);
+            }else {
+                await drop("elements_deleted", `uid='${elementDeleted.uid}'`, false, null, false);
+            }
+
+        } catch (err) {
+            console.log(err);
+        }
+    }
 }
 
-const syncBothDatabase = async () => {
+const syncBothDatabase = async (session) => {
+    console.log("Iniciando verificação a cada 5 minutos");
+    await verifyConnection(session);
     setInterval(async () => {
-        await verifyConnection();
-    }, 60000 * 5);
+        console.log("Verificando");
+        await verifyConnection(session);
+    }, 5000);
+}
+
+async function getBase64ImageFromUrl(imageUrl) {
+    const img = new Image();
+    img.crossOrigin = "Anonymous"; // Evitar problemas de CORS
+    img.src = imageUrl;
+
+    return new Promise((resolve, reject) => {
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+
+            // Converte a imagem para Base64
+            const dataURL = canvas.toDataURL("image/png");
+            resolve(dataURL);
+        };
+
+        img.onerror = (error) => {
+            reject(error);
+        };
+    });
 }
 
 export {

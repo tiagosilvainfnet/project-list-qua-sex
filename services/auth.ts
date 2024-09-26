@@ -10,6 +10,7 @@ const login = async (email: string, password: string, setSession: any) => {
         const response: UserCredential = await signInWithEmailAndPassword(auth, email, password);
         const user: any = response.user.toJSON();
 
+        // TODO: Pegar no firebase o perfil no banco
         const _user: UserInterface = {
             email: user.email ? user.email : "",
             emailVerified: user.emailVerified.toString(),

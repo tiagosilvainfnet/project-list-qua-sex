@@ -27,7 +27,6 @@ export default function LoginScreen() {
     const initDatabases = async () => {
         await dropTables();
         await createTables();
-        await syncBothDatabase();
     }
 
     useEffect(() => {

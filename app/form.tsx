@@ -36,6 +36,24 @@ export default function FormScreen() {
         loadData();
     }, []);
 
+    const _delete = async () => {
+        try {
+            await drop("item", `uid='${params.uid}'`, false, null, true);
+
+            const imagesIds: any = await select("item_image", ["uid", "image"], `itemUid='${params.uid}'`, true);
+            for(let imageIds of imagesIds){
+                await drop("item_image", `uid='${imageIds.uid}'`, true, imageIds.image, true);
+            }
+            setMessageText("Dado deletado com sucesso!!!");
+            setTimeout(() => {
+                router.back();
+            }, 2000);
+        }catch (err){
+            console.log(err)
+            setMessageText("Um erro ocorreu ao deletar o dado.")
+        }
+    }
+
     const _update = async () => {
         setLoading(true);
 
@@ -50,7 +68,7 @@ export default function FormScreen() {
 
                 const imagesIds: any = await select("item_image", ["uid", "image"], `itemUid='${uid}'`, true);
                 for(let imageIds of imagesIds){
-                    await drop("item_image", `uid='${imageIds.uid}'`, true, imageIds.image);
+                    await drop("item_image", `uid='${imageIds.uid}'`, true, imageIds.image, true);
                 }
 
                 for(let image of data.images){
@@ -91,6 +109,8 @@ export default function FormScreen() {
             const d: ItemIterface = await select("item", [ "uid", "title", "description", "createdAt", "sync"], `uid='${params.uid}'`, false);
             const images: Array<ItemImageInterface> = await select("item_image", [ "uid", "image", "itemUid", "createdAt", "sync"], `itemUid='${params.uid}'`, true);
 
+            console.log(d)
+            console.log(images)
             setData((v: any) => ({
                 ...v,
                 ...d,
@@ -251,6 +271,18 @@ export default function FormScreen() {
                     mode="contained"
                     onPress={_update}>
                     {data && data.uid ? "Editar" : "Cadastrar"}
+                </Button>
+            </Grid>
+            <Grid style={{
+                ...styles.padding
+            }}>
+                <Button
+                    style={{
+                        borderRadius: 0,
+                        backgroundColor: theme.colors.error
+                    }}
+                    mode="contained"
+                    onPress={_delete}>Deletar
                 </Button>
             </Grid>
         </ScrollView>
