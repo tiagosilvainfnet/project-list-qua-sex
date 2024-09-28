@@ -109,8 +109,7 @@ export default function FormScreen() {
             const d: ItemIterface = await select("item", [ "uid", "title", "description", "createdAt", "sync"], `uid='${params.uid}'`, false);
             const images: Array<ItemImageInterface> = await select("item_image", [ "uid", "image", "itemUid", "createdAt", "sync"], `itemUid='${params.uid}'`, true);
 
-            console.log(d)
-            console.log(images)
+            console.log(images[0])
             setData((v: any) => ({
                 ...v,
                 ...d,

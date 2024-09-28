@@ -1,7 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import * as Network from 'expo-network';
 import {deleteData, getData, loadData, updateData} from "@/services/realtime";
-import {object} from "prop-types";
 import {deleteImage, uploadImageToFirebaseStorage} from "@/services/storage";
 import {ItemIterface} from "@/interfaces/Item";
 
@@ -268,9 +267,11 @@ const populateDatabase = async (uid: string) => {
 
     for(let key of itemImagesKeys){
         const itemImage = itemImages[key]
+
+        const image = await getBase64ImageFromUrl(itemImage.image);
         await insert("item_image", {
             uid: key,
-            image: itemImage.image,
+            image: image,
             itemUid: itemImage.itemUid,
             sync: 1
         }, false);
@@ -321,32 +322,28 @@ const syncBothDatabase = async (session) => {
     setInterval(async () => {
         console.log("Verificando");
         await verifyConnection(session);
-    }, 5000);
+    }, 20000);
 }
 
-async function getBase64ImageFromUrl(imageUrl) {
-    const img = new Image();
-    img.crossOrigin = "Anonymous"; // Evitar problemas de CORS
-    img.src = imageUrl;
+const getBase64ImageFromUrl = async (imageUrl: string): Promise<string> => {
+    try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
 
-    return new Promise((resolve, reject) => {
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-
-            // Converte a imagem para Base64
-            const dataURL = canvas.toDataURL("image/png");
-            resolve(dataURL);
-        };
-
-        img.onerror = (error) => {
-            reject(error);
-        };
-    });
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                resolve(reader.result); // Isso será a string Base64
+            };
+            reader.onerror = (error) => {
+                reject(error);
+            };
+            reader.readAsDataURL(blob); // Lê o blob como DataURL (Base64)
+        });
+    } catch (error) {
+        console.error("Erro ao buscar e converter a imagem:", error);
+        throw error;
+    }
 }
 
 export {
