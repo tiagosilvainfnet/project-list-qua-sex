@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "project-list-qua-sex",
+    "name": "Project List",
     "slug": "project-list-qua-sex",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ],
+      "package": "com.tiagosilvainfnet.projectlistquasex"
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +50,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "e9bad3c8-1471-42bd-9a32-2f6c20734611"
+      }
     }
   }
 }

@@ -1,23 +1,38 @@
-import {Avatar, Button, Camera, Fab, Grid, TextInput, Topbar} from "@/components";
+import {Avatar, Button, Camera, Fab, Grid, Snackbar, TextInput, Topbar} from "@/components";
 import {select} from "@/services/database";
 import {useRef, useState, useEffect} from "react";
 import * as ImagePicker from "expo-image-picker";
 import {UserInterface} from "@/interfaces/User";
+import {update} from "@/services/database";
 
 export default function ProfileScreen() {
-    const [image, setImage] = useState(null);
     const [cameraVisible, setCameraVisible] = useState(false);
+    const [message, setMessage] = useState(null);
     const cameraRef = useRef(null);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<UserInterface>({
         photoURL: null
     });
     const getUser = async () => {
-        const d = await select("user", ["uid", "emailVerified", "displayName", "email", "photoURL", "phoneNumber", "createdAt"], null, false);
+        const d = await select("user", ["uid", "emailVerified", "username", "displayName", "email", "photoURL", "phoneNumber", "createdAt"], null, false);
+
         setData((v) => ({
             ...v,
             ...d
         }))
+    }
+
+    const _update = async () => {
+        setLoading(true);
+
+        try{
+            await update('user', data, data.uid, true)
+            setMessage("Dados atualizados com sucesso!!!")
+        }catch (err){
+            setMessage("Um erro ocorreu ao atualizar o perfil.")
+        }
+
+        setLoading(false);
     }
 
     useEffect(() => {
@@ -90,6 +105,7 @@ export default function ProfileScreen() {
                         <TextInput
                             label="Nome"
                             value={data.displayName}
+                            onChangeText={(text: string) => setData((v) => ({...v, displayName: text}))}
                         />
                     </Grid>
                     <Grid style={{
@@ -98,6 +114,7 @@ export default function ProfileScreen() {
                         <TextInput
                             label="Nome de usuário"
                             value={data.username}
+                            onChangeText={(text: string) => setData((v) => ({...v, username: text}))}
                         />
                     </Grid>
                     <Grid style={{
@@ -117,6 +134,7 @@ export default function ProfileScreen() {
                             label="Telefone"
                             keyboardType="numeric"
                             value={data.phoneNumber}
+                            onChangeText={(text: string) => setData((v) => ({...v, phoneNumber: text}))}
                         />
                     </Grid>
                     <Grid style={{
@@ -124,11 +142,18 @@ export default function ProfileScreen() {
                     }}>
                         <Button
                             loading={loading}
-                            mode="contained" onPress={() => {}}>
+                            onPress={_update}
+                            mode="contained">
                             Salvar
                         </Button>
                     </Grid>
                 </Grid>
+                <Snackbar
+                    visible={message !== null}
+                    onDismiss={() => setMessage(null)}
+                    duration={5000}
+                    text={message}
+                />
                 {
                     cameraVisible ? <Camera
                         onCapture={onCapture}

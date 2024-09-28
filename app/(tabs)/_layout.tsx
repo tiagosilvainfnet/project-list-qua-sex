@@ -1,9 +1,10 @@
 import {Redirect, Tabs} from 'expo-router';
-import React from 'react';
+import React, {useEffect} from 'react';
 import { TabBarIcon } from "@/components";
 import {useSession} from "@/app/ctx";
 import {Text} from "react-native";
 import {useTheme} from "react-native-paper";
+import {syncBothDatabase} from "@/services/database";
 
 export default function TabLayout() {
     const { session, isLoading } = useSession();
@@ -15,6 +16,8 @@ export default function TabLayout() {
 
     if(!session){
         return <Redirect href="/login" />
+    }else{
+        syncBothDatabase(session);
     }
 
   return (

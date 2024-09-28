@@ -1,21 +1,26 @@
 import {Button, Camera, Card, Dialog, Grid, IconButton, Snackbar, Text, TextInput, Topbar} from "@/components";
-import {useLocalSearchParams} from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import {useEffect, useRef, useState} from "react";
 import {ScrollView} from "react-native";
 import {useTheme} from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
+import {drop, insert, select, update} from "@/services/database";
+import {ItemImageInterface, ItemIterface} from "@/interfaces/Item";
+import {uploadImageToFirebaseStorage} from "@/services/storage";
+import {UserInterface} from "@/interfaces/User";
 
 export default function FormScreen() {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const params = useLocalSearchParams();
     const [dialogVisible, setDialogVisible] = useState(false);
-    const [data, setData] = useState({
-        id: null,
+    const [data, setData] = useState<ItemIterface>({
+        uid: null,
         title: null,
         description: null,
         images: []
     });
+
     const [cameraVisible, setCameraVisible] = useState(false);
     const [messageText, setMessageText] = useState(null);
     const [imageToDelete, setImageToDelete] = useState(null);
@@ -31,21 +36,87 @@ export default function FormScreen() {
         loadData();
     }, []);
 
+    const _delete = async () => {
+        try {
+            await drop("item", `uid='${params.uid}'`, false, null, true);
+
+            const imagesIds: any = await select("item_image", ["uid", "image"], `itemUid='${params.uid}'`, true);
+            for(let imageIds of imagesIds){
+                await drop("item_image", `uid='${imageIds.uid}'`, true, imageIds.image, true);
+            }
+            setMessageText("Dado deletado com sucesso!!!");
+            setTimeout(() => {
+                router.back();
+            }, 2000);
+        }catch (err){
+            console.log(err)
+            setMessageText("Um erro ocorreu ao deletar o dado.")
+        }
+    }
+
+    const _update = async () => {
+        setLoading(true);
+
+        try{
+            let uid = data.uid
+
+            if (uid) {
+                await update('item', {
+                    title: data.title,
+                    description: data.description,
+                }, uid, true)
+
+                const imagesIds: any = await select("item_image", ["uid", "image"], `itemUid='${uid}'`, true);
+                for(let imageIds of imagesIds){
+                    await drop("item_image", `uid='${imageIds.uid}'`, true, imageIds.image, true);
+                }
+
+                for(let image of data.images){
+                    await insert('item_image', {
+                        image: image,
+                        itemUid: uid
+                    }, true);
+                }
+            }else {
+                uid = await insert('item', {
+                    title: data.title,
+                    description: data.title,
+                }, true)
+
+                if(data.images?.length > 0){
+                    for(let image of data.images){
+                        await insert('item_image', {
+                            image: image,
+                            itemUid: uid
+                        }, true)
+                    }
+                }
+            }
+            setMessageText(data.uid ? "Dado atualizado com sucesso!!!" : "Dado criado com sucesso!!!");
+            setTimeout(() => {
+                router.back();
+            }, 2000);
+        }catch (err){
+            console.log(err)
+            setMessageText(data.uid ? "Um erro ocorreu ao atualizar o dado.": "Um erro ocorreu ao criar o dado.")
+        }
+
+        setLoading(false);
+    }
+
     const loadData = async () => {
-        if(params.id){
+        if(params.uid){
+            const d: ItemIterface = await select("item", [ "uid", "title", "description", "createdAt", "sync"], `uid='${params.uid}'`, false);
+            const images: Array<ItemImageInterface> = await select("item_image", [ "uid", "image", "itemUid", "createdAt", "sync"], `itemUid='${params.uid}'`, true);
+
+            console.log(images[0])
             setData((v: any) => ({
                 ...v,
-                id: params.id,
-                title: "Teste",
-                description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-                images: [
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg",
-                    "https://img.freepik.com/fotos-gratis/beleza-abstrata-de-outono-em-padrao-multicolorido-de-veios-de-folhas-gerado-por-ia_188544-9871.jpg"
-                ]
+                ...d,
+                title: d.title,
+                description: d.description,
+                images: images.map(image => image.image),
+                uid: params.uid,
             }));
         }
     }
@@ -84,7 +155,7 @@ export default function FormScreen() {
         <Grid style={{
             ...styles.padding
         }}>
-            <Text variant="headlineLarge">{ data.id ? "Cadastrar item" : "Editar item" }</Text>
+            <Text variant="headlineLarge">{ data && data.uid ? "Editar item" : "Cadastrar item" }</Text>
         </Grid>
         <ScrollView>
             <Grid style={{
@@ -197,8 +268,20 @@ export default function FormScreen() {
                         borderRadius: 0
                     }}
                     mode="contained"
-                    onPress={() => {}}>
-                    {data.id ? "Editar" : "Cadastrar"}
+                    onPress={_update}>
+                    {data && data.uid ? "Editar" : "Cadastrar"}
+                </Button>
+            </Grid>
+            <Grid style={{
+                ...styles.padding
+            }}>
+                <Button
+                    style={{
+                        borderRadius: 0,
+                        backgroundColor: theme.colors.error
+                    }}
+                    mode="contained"
+                    onPress={_delete}>Deletar
                 </Button>
             </Grid>
         </ScrollView>
